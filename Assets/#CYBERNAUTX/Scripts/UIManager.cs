@@ -16,7 +16,7 @@ public class UIManager : MonoBehaviour
 
     [BoxGroup("Settings")]
     [SerializeField]
-    private bool showMainUIOnStart = false;
+    private string defaultMenu = "";
 
     [BoxGroup("Settings")]
     [SerializeField]
@@ -56,6 +56,11 @@ public class UIManager : MonoBehaviour
 
         if (windowedToggle != null)
             windowedToggle.onValueChanged.AddListener(OnWindowedToggleChanged);
+    }
+
+    private void Start()
+    {
+        OpenMenuSingle(defaultMenu);
     }
 
     public void OpenMenuSingle(string menuName = "") => OpenMenu(menuName);
