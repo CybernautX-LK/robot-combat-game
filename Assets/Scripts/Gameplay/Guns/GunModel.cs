@@ -2,6 +2,9 @@
 
 public class GunModel : MonoBehaviour
 {
+    [SerializeField]
+    private Weapon.Type type;
+
     [SerializeField] GunController gunController;
     MeshRenderer meshRenderer;
 

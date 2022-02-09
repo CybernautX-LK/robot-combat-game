@@ -30,62 +30,72 @@ public class HealthBar : MonoBehaviour
     [SerializeField]
     private Slider healthBar;
 
+    [SerializeField]
+    private float duration = 0.5f;
+
     public float currentValue { get; private set; }
     private Image fillImage;
 
-    private void OnEnable()
-    {
-        if (healthBar != null)
-            healthBar.onValueChanged.AddListener(OnSliderValueChanged);
-    }
-
-    private void OnDisable()
-    {
-        if (healthBar != null)
-            healthBar.onValueChanged.RemoveListener(OnSliderValueChanged);
-    }
+    //private void OnEnable()
+    //{
+    //    if (healthBar != null)
+    //        healthBar.onValueChanged.AddListener(OnSliderValueChanged);
+    //}
+    //
+    //private void OnDisable()
+    //{
+    //    if (healthBar != null)
+    //        healthBar.onValueChanged.RemoveListener(OnSliderValueChanged);
+    //}
 
     private void Awake()
+    {
+        if (healthBar != null && healthBar.fillRect != null && healthBar.fillRect.TryGetComponent(out Image image))
+                fillImage = image;
+
+        SetValue(startValue);
+    }
+
+    public void Initialize(float minValue, float maxValue, float startValue)
     {
         if (healthBar != null)
         {
             healthBar.minValue = minValue;
             healthBar.maxValue = maxValue;
-
-            if (healthBar.fillRect != null && healthBar.fillRect.TryGetComponent(out Image image))
-                fillImage = image;
         }
 
-        SetValue(startValue);
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+        this.startValue = startValue;
 
-        currentValue = 1f;
+        SetValue(startValue);
     }
 
     [Button]
-    public void SetValue(float value)
+    public void SetValue(float value, float duration = 0.0f)
     {
-        float clampedValue = Mathf.Clamp(value, minValue, maxValue);
+        float newValue = Mathf.Clamp(value, minValue, maxValue);
+        
+        UpdateUI(currentValue, newValue, duration);
+
+        currentValue = newValue;
+    }
+
+
+    private void UpdateUI(float fromValue, float toValue, float duration = 0.0f)
+    {
 
         if (healthBar != null)
-            healthBar.SetValueWithoutNotify(clampedValue);
+        {
+            healthBar.DOValue(toValue, duration);
+        }
 
-        currentValue = clampedValue;
-
-        UpdateUI();
-    }
-
-
-    private void UpdateUI()
-    {
         if (textDisplay != null)
-            textDisplay.text = Mathf.RoundToInt(currentValue).ToString();
+        {
+            textDisplay.DOCounter((int)fromValue, (int)toValue, duration);
+        }
 
         if (fillImage != null)
-            fillImage.color = Color.Lerp(negativeColor, positiveColor, currentValue / maxValue);
-    }
-
-    private void OnSliderValueChanged(float value)
-    {
-        SetValue(value);        
+            fillImage.color = Color.Lerp(negativeColor, positiveColor, toValue / maxValue);
     }
 }
