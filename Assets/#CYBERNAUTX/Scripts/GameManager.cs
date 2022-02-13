@@ -200,6 +200,7 @@ namespace CybernautX
                     if (currentSelectedWeapons.Contains(slot.selectedItem))
                     {
                         allPlayersUseDifferentWeapons = false;
+                        Debug.LogWarning($"{typeof(GameManager).Name}: {player.name} is not using different weapons.");
                         break;
                     }
 
@@ -209,9 +210,6 @@ namespace CybernautX
             }
 
             bool settingsValid = allPlayersUseDifferentWeapons;
-
-            string message = settingsValid ? "Settings valid" : "Settings invalid";
-            Debug.Log($"{typeof(GameManager).Name}: {message}");
 
             return settingsValid;
         }
