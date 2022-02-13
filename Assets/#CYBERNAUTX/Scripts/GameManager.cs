@@ -1,149 +1,225 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using Sirenix.OdinInspector;
 using System;
 using System.Linq;
 
-public class GameManager : MonoBehaviour
+namespace CybernautX
 {
-    [BoxGroup("Settings")]
-    [SerializeField]
-    [Range(1, 5)]
-    private int roundsToWin = 3;
-
-    [BoxGroup("Settings")]
-    [SerializeField]
-    [Range(3, 5)]
-    private int countdownTimer = 5;
-
-    [BoxGroup("Settings")]
-    [SerializeField]
-    [Range(30, 300)]
-    private int roundDuration = 120;
-
-    [BoxGroup("Settings")]
-    [SerializeField]
-    private List<Weapon> availableWeapons = new List<Weapon>();
-
-    [BoxGroup("Settings")]
-    [SerializeField]
-    private Weapon[] playerWeapons;
-
-    [BoxGroup("Settings")]
-    [SerializeField]
-    private Weapon[] opponentWeapons;
-
-    [BoxGroup("References")]
-    [SerializeField]
-    private List<ItemSelection> playerWeaponSelections = new List<ItemSelection>();
-
-    [BoxGroup("References")]
-    [SerializeField]
-    private List<ItemSelection> opponentWeaponSelections = new List<ItemSelection>();
-
-    [BoxGroup("References")]
-    [SerializeField]
-    private ItemSelection roundsToWinSelection;
-
-    private void Awake()
+    public class GameManager : MonoSingleton<GameManager>
     {
-        playerWeapons = new Weapon[playerWeaponSelections.Count];
-        opponentWeapons = new Weapon[opponentWeaponSelections.Count];
-    }
+        [BoxGroup("General")]
+        [SerializeField]
+        private GameManagerEvents gameManagerEvents;
 
-    private void OnEnable()
-    {
-        if (roundsToWinSelection != null)
-            roundsToWinSelection.OnCurrentItemChangedEvent += OnRoundsToWinChanged;
+        [BoxGroup("General")]
+        [SerializeField]
+        private UIManagerEvents uiManagerEvents;
 
-        foreach (ItemSelection itemSelection in playerWeaponSelections)
+        [BoxGroup("General")]
+        [SerializeField]
+        private List<Player> players = new List<Player>();
+
+        [BoxGroup("Settings")]
+        [SerializeField]
+        [Range(1, 5)]
+        private int roundsToWin = 3;
+
+        [BoxGroup("Settings")]
+        [SerializeField]
+        [Range(0, 5)]
+        private float roundDelay = 1;
+
+        [BoxGroup("Settings")]
+        [SerializeField]
+        [Range(0, 5)]
+        private int countdownTimer = 5;
+
+        [BoxGroup("Settings")]
+        [SerializeField]
+        [Range(10, 300)]
+        private int roundDuration = 120;
+
+        [BoxGroup("References")]
+        [SerializeField]
+        private ItemSelection roundsToWinSelection;
+
+        [BoxGroup("Messages")]
+        [SerializeField]
+        private string gameStartedMessage = "Game Starts...";
+
+        [BoxGroup("Messages")]
+        [SerializeField]
+        private string roundStartedMessage = "Fight!";
+
+        [BoxGroup("Messages")]
+        [SerializeField]
+        private string roundEndedMessage = "Game Over!";
+
+        private float currentRoundTime;
+        private Coroutine currentGameCoroutine;
+
+        public static UnityAction OnGameStartedEvent;
+        public static UnityAction OnGameRoundStartedEvent;
+
+        private void Awake()
         {
-            itemSelection.OnCurrentItemChangedEvent += OnPlayerWeaponsChanged;
-            //Debug.Log("Player Subscribed");
+            Instance = this;
+
+            if (gameManagerEvents != null)
+            {
+                gameManagerEvents.OnGameStartEvent += StartGame;
+                gameManagerEvents.OnGameRoundUpdateEvent += OnGameRoundUpdate;
+            }
         }
 
-        foreach (ItemSelection itemSelection in opponentWeaponSelections)
+        private void OnDestroy()
         {
-            itemSelection.OnCurrentItemChangedEvent += OnOpponentWeaponsChanged;
-            //Debug.Log("Opponent Subscribed");
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (roundsToWinSelection != null)
-            roundsToWinSelection.OnCurrentItemChangedEvent -= OnRoundsToWinChanged;
-
-        foreach (ItemSelection itemSelection in playerWeaponSelections)
-        {
-            itemSelection.OnCurrentItemChangedEvent -= OnPlayerWeaponsChanged;
-            //Debug.Log("Player Unsubscribed");
+            if (gameManagerEvents != null)
+            {
+                gameManagerEvents.OnGameStartEvent -= StartGame;
+                gameManagerEvents.OnGameRoundUpdateEvent -= OnGameRoundUpdate;
+            }
         }
 
-        foreach (ItemSelection itemSelection in opponentWeaponSelections)
+        private void Start() => LoadingManager.LoadSceneAdditive("01_MainMenu");
+
+        [Button]
+        public void StartGame()
         {
-            itemSelection.OnCurrentItemChangedEvent -= OnOpponentWeaponsChanged;
-            //Debug.Log("Opponent Unsubscribed");
+            if (!SettingsValid()) return;
+
+            if (currentGameCoroutine != null)
+                StopCoroutine(currentGameCoroutine);
+
+            currentGameCoroutine = StartCoroutine(StartGameCoroutine());
         }
-    }
 
-    [Button]
-    public void StartGame()
-    {
-        if (!SettingsValid()) return;
-    }
+        private IEnumerator StartGameCoroutine()
+        {
+            OnGameStartedEvent?.Invoke();
 
-    private bool SettingsValid()
-    {
-        bool playerUsesDifferentWeapons = playerWeapons.Distinct().Count() == playerWeapons.Count();
-        bool opponentUsesDifferentWeapons = opponentWeapons.Distinct().Count() == opponentWeapons.Count();
-        return playerUsesDifferentWeapons && opponentUsesDifferentWeapons;
-    }
+            Debug.Log($"{typeof(GameManager).Name}: Loading Arena Started");
 
-    private void OnPlayerWeaponsChanged(ItemSelection itemSelection)
-    {
-        //Debug.Log("Player Weapons Changed");
+            yield return LoadingManager.LoadSceneAdditiveAsync("02_Arena");
 
-        Weapon weapon = GetWeaponByName(itemSelection.currentItem.name);
+            Debug.Log($"{typeof(GameManager).Name}: Loading Arena Complete");
+           
+            InitializeGame();
 
-        if (weapon == null) return;
+            uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(gameStartedMessage, roundDelay));
 
-        int index = playerWeaponSelections.IndexOf(itemSelection);
+            yield return new WaitForSeconds(roundDelay);
 
-        playerWeapons[index] = weapon;
+            // Countdown Coroutine
+            yield return StartCoroutine(CountdownTimer(countdownTimer));
 
-        
-    }
+            IEnumerator CountdownTimer(int seconds)
+            {
+                Debug.Log($"{typeof(GameManager).Name}: Countdown Started");
 
-    private void OnOpponentWeaponsChanged(ItemSelection itemSelection)
-    {
-        //Debug.Log("Opponents Weapons Changed");
+                for (int i = seconds; i > 0; i--)
+                {
+                    uiManagerEvents?.ShowMessage($"{i}");
 
-        Weapon weapon = GetWeaponByName(itemSelection.currentItem.name);
+                    Debug.Log($"{typeof(GameManager).Name}: {i}");
+                    yield return new WaitForSeconds(1.0f);
+                }
 
-        if (weapon == null) return;
+                Debug.Log($"{typeof(GameManager).Name}: Countdown Complete");
+            }
 
-        int index = opponentWeaponSelections.IndexOf(itemSelection);
+            yield return StartCoroutine(StartGameRound());
 
-        opponentWeapons[index] = weapon;
-    }
+            // Game Round Coroutine
+            IEnumerator StartGameRound()
+            {
+                Debug.Log($"{typeof(GameManager).Name}: Round Started");
 
-    private void OnRoundsToWinChanged(ItemSelection itemSelection)
-    {
-        int amountOfRounds = int.Parse(itemSelection.currentItem.name);
-        roundsToWin = amountOfRounds;
-    }
+                OnGameRoundStartedEvent?.Invoke();
+
+                uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(roundStartedMessage, 2.0f));
+
+                while (!GameOver())
+                {
+                    // Update Timer
+                    currentRoundTime -= Time.deltaTime;
+                    uiManagerEvents?.UpdateTimer(currentRoundTime);
+                    yield return new WaitForEndOfFrame();
+                }
+
+                currentRoundTime = 0.0f;
+                uiManagerEvents?.UpdateTimer(currentRoundTime);
+                uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(roundEndedMessage, 3.0f));
+
+                Debug.Log($"{typeof(GameManager).Name}: Round Complete");
+            }
+
+            // Game Over Coroutine
+        }
+
+        private bool GameOver()
+        {
+            bool roundTimeEnded = currentRoundTime < 0.0f;
+            return roundTimeEnded;
+        }
+
+        private void InitializeGame()
+        {
+            currentRoundTime = roundDuration;
+            uiManagerEvents?.UpdateTimer(currentRoundTime);
+
+            // Spawn Players
+
+            // Set Weapons
+
+            // Update UI
+        }
 
 
 
-    private Weapon GetWeaponByName(string name)
-    {
-        Weapon weapon = availableWeapons.FirstOrDefault((x) => x.type.ToString() == name.Replace(" ", ""));
+        [Button]
+        public void ReturnToMainMenu()
+        {
+            LoadingManager.UnloadScene("02_Arena");
+        }
 
-        if (weapon == null)
-            return null;
+        private bool SettingsValid()
+        {
 
-        return weapon;
+            bool allPlayersUseDifferentWeapons = true;
+
+            foreach (Player player in players)
+            {
+                List<Item> currentSelectedWeapons = new List<Item>();
+
+                foreach (ItemSlot slot in player.weaponSlots)
+                {
+                    if (currentSelectedWeapons.Contains(slot.selectedItem))
+                    {
+                        allPlayersUseDifferentWeapons = false;
+                        break;
+                    }
+
+                    currentSelectedWeapons.Add(slot.selectedItem);
+                }
+
+            }
+
+            bool settingsValid = allPlayersUseDifferentWeapons;
+
+            string message = settingsValid ? "Settings valid" : "Settings invalid";
+            Debug.Log($"{typeof(GameManager).Name}: {message}");
+
+            return settingsValid;
+        }
+
+        private void OnGameRoundUpdate(int amount)
+        {
+            roundsToWin = amount;
+        }
     }
 }
+

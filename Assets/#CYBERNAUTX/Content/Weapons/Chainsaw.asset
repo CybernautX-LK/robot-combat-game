@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea04477c08e46ab478d4d72a68c37097, type: 3}
   m_Name: Chainsaw
   m_EditorClassIdentifier: 
-  type: 2
+  Name: Chainsaw

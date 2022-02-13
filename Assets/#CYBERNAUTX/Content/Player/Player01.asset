@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bea620e3ee0a784da15029fc070f84c, type: 3}
+  m_Name: Player01
+  m_EditorClassIdentifier: 
+  name: Human
+  maxHealth: 100
+  minHealth: 0
+  currentHealth: 100
+  weaponSlots:
+  - {fileID: 11400000, guid: b82290d9370e34044b7f72fe3685ec89, type: 2}
+  - {fileID: 11400000, guid: e63a034cb1b0ba24ead939b47f97092c, type: 2}

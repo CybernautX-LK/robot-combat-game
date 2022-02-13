@@ -2,51 +2,55 @@
 using System;
 using Sirenix.OdinInspector;
 
-public class MonoSingleton<T> : SerializedMonoBehaviour
+namespace CybernautX
 {
-    public bool isInitialized { get; private set; }
-
-    private static T _instance;
-    public static T Instance
+    public class MonoSingleton<T> : SerializedMonoBehaviour
     {
-        get
+        public bool isInitialized { get; private set; }
+
+        private static T _instance;
+        public static T Instance
         {
-            if (_instance != null)
+            get
             {
-                return _instance;
+                if (_instance != null)
+                {
+                    return _instance;
+                }
+                else
+                {
+                    string message = typeof(T).Name + " is not attached to a gameObject or the gameObject is not active.\nMake also sure to set 'Instance = this;' in your Awake() function!";
+
+                    Debug.LogError(message);
+                    return default(T);
+                    //throw new NullReferenceException(message);
+                }
             }
-            else
+            protected set
             {
-                string message = typeof(T).Name + " is not attached to a gameObject or the gameObject is not active.\nMake also sure to set 'Instance = this;' in your Awake() function!";
-                
-                Debug.LogError(message);
-                return default(T);
-                //throw new NullReferenceException(message);
+                _instance = value;
             }
         }
-        protected set
+
+        public static bool IsInitialized
         {
-            _instance = value;
+            get { return _instance != null; }
+        }
+
+        public virtual void Init()
+        {
+            isInitialized = true;
+        }
+
+        public virtual void Reset()
+        {
+            isInitialized = false;
+        }
+
+        protected virtual void OnApplicationQuit()
+        {
+            _instance = default(T);
         }
     }
 
-    public static bool IsInitialized
-    {
-        get { return _instance != null; }
-    }
-
-    public virtual void Init()
-    {
-        isInitialized = true;
-    }
-
-    public virtual void Reset()
-    {
-        isInitialized = false;
-    }
-
-    protected virtual void OnApplicationQuit()
-    {
-        _instance = default(T);
-    }
 }

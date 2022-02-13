@@ -1,173 +1,107 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Events;
-using Sirenix.OdinInspector;
+using TMPro;
+using DG.Tweening;
 
-public class UIManager : MonoBehaviour
+namespace CybernautX
 {
-    [System.Serializable]
-    public class Menu
+    public class UIManager : MonoSingleton<UIManager>
     {
-        public string menuName = "Insert Menu Name";
-        public GameObject gameObject;
-    }
-
-    [BoxGroup("Settings")]
-    [SerializeField]
-    private string defaultMenu = "";
-
-    [BoxGroup("Settings")]
-    [SerializeField]
-    private bool hideMainMenuButton = true;
-
-    [BoxGroup("References")]
-    [SerializeField]
-    private GameObject mainMenuButton = null;
-    [BoxGroup("References")]
-    public GameObject continueButton;
-
-    [BoxGroup("References")]
-    [SerializeField]
-    private List<Menu> menus = new List<Menu>();
-
-    [BoxGroup("Selectables")]
-    [SerializeField]
-    private Toggle fullscreenToggle = null;
-
-    [BoxGroup("Selectables")]
-    [SerializeField]
-    private Toggle windowedToggle = null;
-
-
-    [BoxGroup("Debug")]
-    [ReadOnly]
-    [SerializeField]
-    private List<Menu> activeMenus = new List<Menu>();
-
-    public UnityEvent OnMainMenuActivation = new UnityEvent();
-    public UnityEvent OnMainMenuDeactivation = new UnityEvent();
-
-    private void Awake()
-    {
-        if (fullscreenToggle != null)
-            fullscreenToggle.onValueChanged.AddListener(OnFullscreenToggleChanged);
-
-        if (windowedToggle != null)
-            windowedToggle.onValueChanged.AddListener(OnWindowedToggleChanged);
-    }
-
-    private void Start()
-    {
-        OpenMenuSingle(defaultMenu);
-    }
-
-    public void OpenMenuSingle(string menuName = "") => OpenMenu(menuName);
-
-    public void OpenMenuAdditive(string menuName = "") => OpenMenu(menuName, true);
-
-    public void OpenMenu(string menuName = "", bool additive = false)
-    {
-        //if (mainUI != null)
-        //    mainUI.SetActive(true);
-
-        if (menus.Count > 0 && menus[0].gameObject != null)
+        public class ShowMessageSettings
         {
-            Menu menuToOpen = (menuName == "") ? menus[0] : GetMenuByName(menuName);
-
-            if (menuToOpen != null)
+            public ShowMessageSettings(string message, float duration)
             {
-                if (!additive)
-                    CloseAllMenus();
-
-                if (mainMenuButton != null && hideMainMenuButton && mainMenuButton.activeSelf)
-                    mainMenuButton.SetActive(false);
-
-                menuToOpen.gameObject.SetActive(true);
-
-                RegisterMenu(menuToOpen);
+                this.message = message;
+                this.duration = duration;
             }
+
+            public string message;
+            public float duration;
         }
 
-        OnMainMenuActivation?.Invoke();
-    }
+        [SerializeField]
+        private GameManagerEvents gameManagerEvents;
 
-    public void CloseMenu(string menuName = "")
-    {
-        Menu menuToClose = GetMenuByName(menuName);
+        [SerializeField]
+        private UIManagerEvents uiManagerEvents;
 
-        if (menuToClose != null)
+        [SerializeField]
+        private TextMeshProUGUI messageDisplay;
+
+        [SerializeField]
+        private float messageDuration;
+
+        [SerializeField]
+        private Ease messageEase;
+
+        private MainMenuController mainMenuController;
+
+        private HUDController hudController;
+
+        private void Awake()
         {
-            menuToClose.gameObject.SetActive(false);
-            UnregisterMenu(menuToClose);
+            Instance = this;
+
+            if (uiManagerEvents != null)
+            {
+                uiManagerEvents.OnShowMessageEvent += ShowMessage;
+                uiManagerEvents.OnShowMessageWithSettingsEvent += ShowMessage;
+                uiManagerEvents.OnUpdateTimerEvent += OnUpdateTimer;
+            }
+
+            GameManager.OnGameStartedEvent += OnGameStarted;
+
+            MainMenuController.OnAwakeEvent += OnMainMenuControllerAwake;
+            HUDController.OnAwakeEvent += OnHUDControllerAwake;
+
+            if (messageDisplay != null)
+                messageDisplay.text = "";
         }
 
-        if (activeMenus.Count < 1)
-        {
-            if (mainMenuButton != null && !hideMainMenuButton && !mainMenuButton.activeSelf)
-                mainMenuButton.SetActive(true);
+        private void OnHUDControllerAwake(HUDController controller) => hudController = controller;
 
-            OnMainMenuDeactivation?.Invoke();
+        private void OnMainMenuControllerAwake(MainMenuController controller) => mainMenuController = controller;
+
+        private void OnDestroy()
+        {
+            if (uiManagerEvents != null)
+            {
+                uiManagerEvents.OnShowMessageEvent -= ShowMessage;
+                uiManagerEvents.OnShowMessageWithSettingsEvent -= ShowMessage;
+                uiManagerEvents.OnUpdateTimerEvent -= OnUpdateTimer;
+            }
+
+            GameManager.OnGameStartedEvent -= OnGameStarted;
         }
 
-    }
-
-    public void CloseAllMenus()
-    {
-        foreach (Menu menu in menus)
+        public void ShowMessage(string message)
         {
-            menu.gameObject.SetActive(false);
-            UnregisterMenu(menu);
+            ShowMessageSettings settings = new ShowMessageSettings(message, messageDuration);
+            ShowMessage(settings);
         }
 
-        if (mainMenuButton != null && !hideMainMenuButton && !mainMenuButton.activeSelf)
+        public void ShowMessage(ShowMessageSettings settings)
         {
-            mainMenuButton.SetActive(true);
+            if (messageDisplay == null) return;
+
+            messageDisplay.text = settings.message;
+            //messageDisplay.DOText(message, messageDuration).SetEase(messageEase);
+            messageDisplay.DOFade(0.0f, settings.duration * 0.5f).SetEase(messageEase).From(1.0f).SetDelay(settings.duration * 0.5f);
+            //messageDisplay.DOScale(0.0f, messageDuration).From(1.0f).SetEase(messageEase);
         }
 
-        OnMainMenuDeactivation?.Invoke();
-    }
+        private void OnUpdateTimer(float time) => hudController?.UpdateTimer(time);
 
-    private Menu GetMenuByName(string menuName)
-    {
-        foreach (Menu menu in menus)
+        private void OnGameStarted()
         {
-            if (menu.menuName == menuName)
-                return menu;
-        }
+            if (hudController != null)
+                hudController.Enable();
 
-        Debug.LogWarning("[UIManager]: Couldn't find a menu with the name " + menuName);
-        return null;
-    }
-
-    private void RegisterMenu(Menu menu)
-    {
-        if (!activeMenus.Contains(menu))
-            activeMenus.Add(menu);
-    }
-
-    private void UnregisterMenu(Menu menu)
-    {
-        if (activeMenus.Contains(menu))
-            activeMenus.Remove(menu);
-    }
-
-    private void OnFullscreenToggleChanged(bool value)
-    {
-        if (value && Screen.fullScreenMode != FullScreenMode.ExclusiveFullScreen)
-        {
-            Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
-            Debug.Log($"{this.name}: Set ScreenMode to fullscreen.");
-        }
-    }
-
-    private void OnWindowedToggleChanged(bool value)
-    {
-        if (value && Screen.fullScreenMode != FullScreenMode.Windowed)
-        {
-            Screen.fullScreenMode = FullScreenMode.Windowed;
-            Debug.Log($"{this.name}: Set ScreenMode to windowed.");
+            if (mainMenuController != null)
+                mainMenuController.CloseAllMenus();
         }
     }
 }
+

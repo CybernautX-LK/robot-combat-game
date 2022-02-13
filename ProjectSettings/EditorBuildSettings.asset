@@ -6,12 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_Scenes/_Game.unity
-    guid: 5a422dca6e1e33f449c7a7d58854d369
+    path: Assets/#CYBERNAUTX/Scenes/00_Boot.unity
+    guid: 9d6771dc67142d346a5dfa87c280a386
   - enabled: 1
-    path: Assets/_Scenes/FARM.unity
-    guid: f8b1bc9413f8f314fb358fd4306ffe14
+    path: Assets/#CYBERNAUTX/Scenes/01_MainMenu.unity
+    guid: a4891ffdf4f905b4182ec332f83d014f
   - enabled: 1
-    path: Assets/_Scenes/CITY.unity
-    guid: f7d11e304f33d9e42abe8cd7014cc176
+    path: Assets/#CYBERNAUTX/Scenes/02_Arena.unity
+    guid: 90b4feb20e9d79646b8bc3f6aa38e63e
   m_configObjects: {}

@@ -5,108 +5,152 @@ using UnityEngine.UI;
 using TMPro;
 using System.Linq;
 using UnityEngine.Events;
+using Sirenix.OdinInspector;
 
-public class ItemSelection : MonoBehaviour
+namespace CybernautX
 {
-    [System.Serializable]
-    public class Item
+    public class ItemSelection : MonoBehaviour
     {
-        public string name;
-    }
+        public enum Type { Amount , PlayerItems }
 
-    [Header("References")]
+        public Type type;
 
-    [SerializeField]
-    private TextMeshProUGUI textDisplay;
+        [ShowIf("type", Type.PlayerItems)]
+        //public Player player;
+        //
+        [ShowIf("type", Type.PlayerItems)]
+        //public int index;
 
-    [SerializeField]
-    private Button nextButton;
+        [ShowIf("type", Type.PlayerItems)]
+        [SerializeField]
+        private List<Item> selectableItems = new List<Item>();
 
-    [SerializeField]
-    private Button previousButton;
+        [ShowIf("type", Type.Amount)]
+        [SerializeField]
+        private int maxAmount;
+        
+        [ShowIf("type", Type.Amount)]
+        [SerializeField]
+        private int minAmount;
 
-    [Header("Settings")]
+        [SerializeField]
+        private TextMeshProUGUI textDisplay;
 
-    [SerializeField]
-    private List<Item> selectableItems = new List<Item>();
+        [SerializeField]
+        private Button nextButton;
 
-    public Item currentItem { get; private set; }
+        [SerializeField]
+        private Button previousButton;
 
-    public UnityAction<ItemSelection> OnCurrentItemChangedEvent;
+        //private int minItemAmount;
+        private int maxItemAmount;
+        private int currentIndex;
+
+        public int currentAmount { get => currentIndex + minAmount; }
+        public Item currentItem { get; private set; }
+
+        public UnityAction<ItemSelection> OnCurrentItemChangedEvent;
+
+        [ShowIf("type", Type.PlayerItems)]
+        public CustomUnityEvents.ItemEvent OnCurrentItemChangedUnityEvent = new CustomUnityEvents.ItemEvent();
+
+        [ShowIf("type", Type.Amount)]
+        public CustomUnityEvents.IntEvent OnCurrentAmountChangedEvent = new CustomUnityEvents.IntEvent();        
 
 
+        private void OnEnable() => Initialize();
 
-    private void OnEnable() => Initialize();
+        private void OnDisable()
+        {
+            if (nextButton != null)
+                nextButton.onClick.RemoveListener(NextItem);
 
-    private void OnDisable()
-    {
-        if (nextButton != null)
-            nextButton.onClick.RemoveListener(NextItem);
+            if (previousButton != null)
+                previousButton.onClick.RemoveListener(PreviousItem);
+        }
 
-        if (previousButton != null)
-            previousButton.onClick.RemoveListener(PreviousItem);
-    }
+        private void Start()
+        {
+            UpdateItem(0);
+        }
 
-    private void Start()
-    {
-        SetItem(selectableItems[0]);
-    }
+        private void Initialize()
+        {
+            if (nextButton != null)
+                nextButton.onClick.AddListener(NextItem);
 
-    private void Initialize()
-    {
-        if (selectableItems.Count < 1 || selectableItems[0] == null) return;      
+            if (previousButton != null)
+                previousButton.onClick.AddListener(PreviousItem);
 
-        if (nextButton != null)
-            nextButton.onClick.AddListener(NextItem);
+            switch (type)
+            {
+                case Type.Amount:
+                    maxItemAmount = maxAmount;
+                    break;
+                case Type.PlayerItems:
+                    maxItemAmount = selectableItems.Count;
+                    break;
+                default:
+                    break;
+            }
+        }
 
-        if (previousButton != null)
-            previousButton.onClick.AddListener(PreviousItem);
-    }
+        public void NextItem()
+        {
+            bool isCurrentItemLastItem = currentIndex == maxItemAmount - 1;
+            int indexOfNextItem = isCurrentItemLastItem ? 0 : currentIndex + 1;
 
-    public void NextItem()
-    {
-        if (currentItem == null) return;
+            UpdateItem(indexOfNextItem);
+        }
 
-        int currentItemIndex = selectableItems.IndexOf(currentItem);
-        bool isCurrentItemLastItem = currentItemIndex == selectableItems.Count - 1;
-        int indexOfNextItem = isCurrentItemLastItem ? 0 : currentItemIndex + 1;
+        public void PreviousItem()
+        {
+            bool isCurrentItemFirstItem = currentIndex == 0;
+            int indexOfPreviousItem = isCurrentItemFirstItem ? maxItemAmount - 1 : currentIndex - 1;
 
-        SetItem(selectableItems[indexOfNextItem]);
+            UpdateItem(indexOfPreviousItem);
+        }
 
-    }
+        private void UpdateUI()
+        {
+            string text = "";
 
-    public void PreviousItem()
-    {
-        if (currentItem == null) return;
+            switch (type)
+            {
+                case Type.Amount:
+                    text = currentAmount.ToString();
+                    break;
+                case Type.PlayerItems:
+                    text = currentItem.Name;
+                    break;
+                default:
+                    break;
+            }
 
-        int currentItemIndex = selectableItems.IndexOf(currentItem);
-        bool isCurrentItemFirstItem = currentItemIndex == 0;
-        int indexOfPreviousItem = isCurrentItemFirstItem ? selectableItems.Count - 1 : currentItemIndex - 1;
+            if (textDisplay != null)
+                textDisplay.text = text;
+        }
 
-        SetItem(selectableItems[indexOfPreviousItem]);
-    }
+        private void UpdateItem(int index)
+        {
+            currentIndex = index;
 
-    public void SetItem(string itemName)
-    {
-        Item item = selectableItems.FirstOrDefault((x) => x.name == itemName);
-        SetItem(item);
-    }
+            switch (type)
+            {
+                case Type.Amount:
+                    OnCurrentAmountChangedEvent?.Invoke(currentAmount);
+                    break;
+                case Type.PlayerItems:
+                    currentItem = selectableItems[index];
+                    OnCurrentItemChangedUnityEvent?.Invoke(currentItem);
+                    break;
+                default:
+                    break;
+            }
 
-    public void SetItem(Item item)
-    {
-        if (item == null) return;
-
-        currentItem = item;
-        UpdateUI();
-
-        //Debug.Log("Current Item Changed Called: " + gameObject.name);
-
-        OnCurrentItemChangedEvent?.Invoke(this);       
-    }
-
-    private void UpdateUI()
-    {
-        if (textDisplay != null)
-            textDisplay.text = currentItem.name;
+            UpdateUI();
+        }
     }
 }
+
+

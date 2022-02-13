@@ -7,95 +7,127 @@ using DG.Tweening;
 using System;
 using Sirenix.OdinInspector;
 
-public class HealthBar : MonoBehaviour
+namespace CybernautX
 {
-    [SerializeField]
-    private Color positiveColor = Color.green;
-
-    [SerializeField]
-    private Color negativeColor = Color.red;
-
-    [SerializeField]
-    private float startValue = 100f;
-
-    [SerializeField]
-    private float minValue = 0f;
-
-    [SerializeField]
-    private float maxValue = 100f;
-
-    [SerializeField]
-    private TextMeshProUGUI textDisplay;
-
-    [SerializeField]
-    private Slider healthBar;
-
-    [SerializeField]
-    private float duration = 0.5f;
-
-    public float currentValue { get; private set; }
-    private Image fillImage;
-
-    //private void OnEnable()
-    //{
-    //    if (healthBar != null)
-    //        healthBar.onValueChanged.AddListener(OnSliderValueChanged);
-    //}
-    //
-    //private void OnDisable()
-    //{
-    //    if (healthBar != null)
-    //        healthBar.onValueChanged.RemoveListener(OnSliderValueChanged);
-    //}
-
-    private void Awake()
+    public class HealthBar : MonoBehaviour
     {
-        if (healthBar != null && healthBar.fillRect != null && healthBar.fillRect.TryGetComponent(out Image image))
+        [SerializeField]
+        private Player player;
+
+        [SerializeField]
+        private Color positiveColor = Color.green;
+
+        [SerializeField]
+        private Color negativeColor = Color.red;
+
+        [SerializeField]
+        private float startValue = 100f;
+
+        [SerializeField]
+        private float minValue = 0f;
+
+        [SerializeField]
+        private float maxValue = 100f;
+
+        [SerializeField]
+        private TextMeshProUGUI textDisplay;
+
+        [SerializeField]
+        private Slider healthSlider;
+
+        [SerializeField]
+        private float duration = 0.5f;
+
+        public float currentValue { get; private set; }
+        private Image fillImage;
+
+        //private void OnEnable()
+        //{
+        //    if (healthBar != null)
+        //        healthBar.onValueChanged.AddListener(OnSliderValueChanged);
+        //}
+        //
+        //private void OnDisable()
+        //{
+        //    if (healthBar != null)
+        //        healthBar.onValueChanged.RemoveListener(OnSliderValueChanged);
+        //}
+
+        private void Awake()
+        {
+            if (healthSlider != null && healthSlider.fillRect != null && healthSlider.fillRect.TryGetComponent(out Image image))
                 fillImage = image;
-
-        SetValue(startValue);
-    }
-
-    public void Initialize(float minValue, float maxValue, float startValue)
-    {
-        if (healthBar != null)
-        {
-            healthBar.minValue = minValue;
-            healthBar.maxValue = maxValue;
         }
 
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.startValue = startValue;
-
-        SetValue(startValue);
-    }
-
-    [Button]
-    public void SetValue(float value, float duration = 0.0f)
-    {
-        float newValue = Mathf.Clamp(value, minValue, maxValue);
-        
-        UpdateUI(currentValue, newValue, duration);
-
-        currentValue = newValue;
-    }
+        private void Start() => Initialize();
 
 
-    private void UpdateUI(float fromValue, float toValue, float duration = 0.0f)
-    {
-
-        if (healthBar != null)
+        private void OnEnable()
         {
-            healthBar.DOValue(toValue, duration);
+            if (player != null)
+            {
+                player.OnHealthUpdatedEvent += OnHealthUpdate;
+            }
         }
 
-        if (textDisplay != null)
+        private void OnHealthUpdate(float value) => SetValue(value, duration);
+
+        private void OnDisable()
         {
-            textDisplay.DOCounter((int)fromValue, (int)toValue, duration);
+            if (player != null)
+            {
+                player.OnHealthUpdatedEvent -= OnHealthUpdate;
+            }
         }
 
-        if (fillImage != null)
-            fillImage.color = Color.Lerp(negativeColor, positiveColor, toValue / maxValue);
+        public void Initialize()
+        {
+            if (player == null)
+            {
+                enabled = false;
+                Debug.Log($"{typeof(HealthBar).Name}: Can't initilaize because player is null.");
+                return;
+            } 
+           
+            minValue = player.minHealth;
+            maxValue = player.maxHealth;
+            startValue = maxValue;
+
+            if (healthSlider != null)
+            {
+                healthSlider.minValue = minValue;
+                healthSlider.maxValue = maxValue;
+            }
+
+            SetValue(startValue);
+        }
+
+        public void SetValue(float value, float duration = 0.0f)
+        {
+            float newValue = Mathf.Clamp(value, minValue, maxValue);
+
+            UpdateUI(currentValue, newValue, duration);
+
+            currentValue = newValue;
+        }
+
+
+        private void UpdateUI(float fromValue, float toValue, float duration = 0.0f)
+        {
+
+            if (healthSlider != null)
+            {
+                healthSlider.DOValue(toValue, duration);
+            }
+
+            if (textDisplay != null)
+            {
+                textDisplay.DOCounter((int)fromValue, (int)toValue, duration);
+            }
+
+            if (fillImage != null)
+                fillImage.color = Color.Lerp(negativeColor, positiveColor, toValue / maxValue);
+        }
     }
 }
+
