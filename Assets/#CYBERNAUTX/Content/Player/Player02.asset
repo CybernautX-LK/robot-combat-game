@@ -15,7 +15,7 @@ MonoBehaviour:
   name: Robot
   maxHealth: 100
   minHealth: 0
-  currentHealth: 100
+  currentHealth: 0
   weaponSlots:
   - {fileID: 11400000, guid: 2bbb1e7fb127f1a4cbd5196a89408f82, type: 2}
   - {fileID: 11400000, guid: b0570365785d8704faafe299c3657a9f, type: 2}

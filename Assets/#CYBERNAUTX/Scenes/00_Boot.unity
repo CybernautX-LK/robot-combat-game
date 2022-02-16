@@ -341,8 +341,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b0ad4f6b5ce1cb848abc0825026e4b6d, type: 2}
   - {fileID: 11400000, guid: 6f2e3b8e4e4b92144a81b4ed6dc37914, type: 2}
   roundsToWin: 3
-  roundDelay: 2
-  countdownTimer: 5
+  roundDelay: 0
+  countdownTimer: 0
   roundDuration: 120
   roundsToWinSelection: {fileID: 0}
   gameStartedMessage: Game Starts...

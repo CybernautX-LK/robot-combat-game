@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
+using CybernautX;
 
 public class GunModel : MonoBehaviour
 {
+    public Weapon weapon;
     [SerializeField] GunController gunController;
     MeshRenderer meshRenderer;
 

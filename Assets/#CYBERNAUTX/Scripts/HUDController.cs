@@ -10,7 +10,13 @@ namespace CybernautX
     public class HUDController : MonoBehaviour
     {
         [SerializeField]
+        private Player player;
+
+        [SerializeField]
         private HealthBar playerHealthBar;
+
+        [SerializeField]
+        private Player enemy;
 
         [SerializeField]
         private HealthBar enemyHealthBar;
@@ -26,11 +32,41 @@ namespace CybernautX
 
         public static UnityAction<HUDController> OnAwakeEvent;
 
-        public void Awake() => OnAwakeEvent?.Invoke(this);
+        public void Awake()
+        {
+            if (player != null)
+                player.OnPointsUpdatedEvent += OnPointsUpdated;
+
+            if (player != null)
+                player.OnPointsUpdatedEvent += OnPointsUpdated;
+
+            OnAwakeEvent?.Invoke(this);
+        }
+
+        private void Start()
+        {
+            UpdatePointCounter();
+        }
+
+        private void OnDestroy()
+        {
+            if (player != null)
+                player.OnPointsUpdatedEvent -= OnPointsUpdated;
+
+            if (player != null)
+                player.OnPointsUpdatedEvent -= OnPointsUpdated;
+        }
 
         public void Enable() => gameObject.SetActive(true);
 
         public void Disable() => gameObject.SetActive(false);
+
+        public void UpdatePointCounter()
+        {
+            if (pointCounter == null || player == null || enemy == null) return;
+
+            pointCounter.text = $"{player.currentPoints} : {enemy.currentPoints}";
+        }
 
         public void UpdateTimer(float time)
         {
@@ -48,6 +84,8 @@ namespace CybernautX
 
             return formatTime;
         }
+
+        private void OnPointsUpdated(int points) => UpdatePointCounter();
     }
 }
 

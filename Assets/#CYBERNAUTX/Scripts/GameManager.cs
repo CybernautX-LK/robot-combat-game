@@ -142,17 +142,18 @@ namespace CybernautX
 
                 uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(roundStartedMessage, 2.0f));
 
-                while (!GameOver())
+                while (PlayersAlive().Count > 1 && !TimeIsUp())
                 {
                     // Update Timer
-                    currentRoundTime -= Time.deltaTime;
-                    uiManagerEvents?.UpdateTimer(currentRoundTime);
+                    UpdateTimer();
+
                     yield return new WaitForEndOfFrame();
                 }
 
-                currentRoundTime = 0.0f;
-                uiManagerEvents?.UpdateTimer(currentRoundTime);
-                uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(roundEndedMessage, 3.0f));
+                Player lastPlayerAlive = PlayersAlive()[0];
+                lastPlayerAlive.SetPoints(lastPlayerAlive.currentPoints + 1);
+
+                uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings($"{(lastPlayerAlive != null ? lastPlayerAlive.name : "No one")} has won!", 3.0f));
 
                 Debug.Log($"{typeof(GameManager).Name}: Round Complete");
             }
@@ -160,10 +161,32 @@ namespace CybernautX
             // Game Over Coroutine
         }
 
-        private bool GameOver()
+        private bool TimeIsUp()
         {
             bool roundTimeEnded = currentRoundTime < 0.0f;
+
             return roundTimeEnded;
+        }
+
+        private List<Player> PlayersAlive()
+        {
+            List<Player> playersAlive = new List<Player>();
+
+            foreach (Player player in players)
+            {
+                if (!player.isDead)
+                {
+                    playersAlive.Add(player);
+                }
+            }
+
+            return playersAlive;
+        }
+
+        private void UpdateTimer()
+        {
+            currentRoundTime -= Time.deltaTime;
+            uiManagerEvents?.UpdateTimer(currentRoundTime);
         }
 
         private void InitializeGame()

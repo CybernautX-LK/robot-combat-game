@@ -31,12 +31,23 @@ namespace CybernautX
         //[BoxGroup("Weapons")]
         //public Weapon[] currentWeapons;
 
+        [ShowInInspector]
+        [ReadOnly]
+        public bool isDead { get => currentHealth <= 0.0f; }
+
+        [ShowInInspector]
+        [ReadOnly]
+        public int currentPoints { get; private set; }
+
+        public UnityAction<int> OnPointsUpdatedEvent;
         public UnityAction<float> OnHealthUpdatedEvent;
+        public UnityAction OnPlayerDeadEvent;
 
         private void OnEnable()
         {
             //currentWeapons = new Weapon[weaponSlots];
             currentHealth = maxHealth;
+            currentPoints = 0;
         }
 
         public void Damage(float value) => SetHealth(currentHealth - value);
@@ -45,20 +56,29 @@ namespace CybernautX
         public void Heal(float value) => SetHealth(currentHealth + value);
 
         public void Die()
-        {
-            currentHealth = 0.0f;
+        {           
+            OnPlayerDeadEvent?.Invoke();
         }
 
         [Button]
         public void SetHealth(float value)
         {
-            currentHealth = Mathf.Clamp(value, 0.0f, maxHealth);
+            if (isDead) return;
 
-            if (currentHealth <= 0.0f)
+            if (value <= 0.0f)
                 Die();
+
+            currentHealth = Mathf.Clamp(value, 0.0f, maxHealth);
 
             OnHealthUpdatedEvent?.Invoke(currentHealth);
         }
+
+        public void SetPoints(int points)
+        {
+            currentPoints = points;
+            OnPointsUpdatedEvent?.Invoke(points);
+        } 
+
 
         //public void SetItem(Item item) { }
 

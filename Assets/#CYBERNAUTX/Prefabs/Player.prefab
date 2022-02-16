@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 4225434191745497384}
   - component: {fileID: 4225434191745497385}
   - component: {fileID: 4225434191745497389}
-  - component: {fileID: 4225434191745497388}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -156,22 +155,6 @@ MonoBehaviour:
   fpsController: {fileID: 4225434191745497385}
   shootingMovementMod: 0.5
   currentGun: 0
---- !u!114 &4225434191745497388
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4225434191745497386}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20af62a19373a4044828378a6e6186af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  healthBar: {fileID: 0}
-  maxHealth: 50
-  minHealth: 0
-  currentHealth: 0
 --- !u!1 &4225434192559733902
 GameObject:
   m_ObjectHideFlags: 0
@@ -3096,6 +3079,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2e605193a80a84c2b9e7f3490bb3969d, type: 3}
+--- !u!4 &4407189498590485262 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3268179909893712179, guid: 2e605193a80a84c2b9e7f3490bb3969d,
+    type: 3}
+  m_PrefabInstance: {fileID: 1185452962740777533}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3918883549362586026 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2743036197364839319, guid: 2e605193a80a84c2b9e7f3490bb3969d,
@@ -3108,12 +3097,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c409c7450f6af46b5c3e89d0f7f5ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &4407189498590485262 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3268179909893712179, guid: 2e605193a80a84c2b9e7f3490bb3969d,
-    type: 3}
-  m_PrefabInstance: {fileID: 1185452962740777533}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1925460328181409377
 PrefabInstance:
   m_ObjectHideFlags: 0
