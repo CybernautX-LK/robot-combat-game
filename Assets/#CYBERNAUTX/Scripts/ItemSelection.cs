@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Linq;
 using UnityEngine.Events;
 using Sirenix.OdinInspector;
 
@@ -13,36 +12,36 @@ namespace CybernautX
     {
         public enum Type { Amount , PlayerItems }
 
+        [BoxGroup("Settings")]
         public Type type;
 
-        [ShowIf("type", Type.PlayerItems)]
-        //public Player player;
-        //
-        [ShowIf("type", Type.PlayerItems)]
-        //public int index;
-
+        [BoxGroup("Settings")]
         [ShowIf("type", Type.PlayerItems)]
         [SerializeField]
         private List<Item> selectableItems = new List<Item>();
 
+        [BoxGroup("Settings")]
         [ShowIf("type", Type.Amount)]
         [SerializeField]
         private int maxAmount;
-        
+
+        [BoxGroup("Settings")]
         [ShowIf("type", Type.Amount)]
         [SerializeField]
         private int minAmount;
 
+        [BoxGroup("References")]
         [SerializeField]
         private TextMeshProUGUI textDisplay;
 
+        [BoxGroup("References")]
         [SerializeField]
         private Button nextButton;
 
+        [BoxGroup("References")]
         [SerializeField]
         private Button previousButton;
 
-        //private int minItemAmount;
         private int maxItemAmount;
         private int currentIndex;
 
@@ -51,9 +50,11 @@ namespace CybernautX
 
         public UnityAction<ItemSelection> OnCurrentItemChangedEvent;
 
+        [BoxGroup("Events")]
         [ShowIf("type", Type.PlayerItems)]
         public CustomUnityEvents.ItemEvent OnCurrentItemChangedUnityEvent = new CustomUnityEvents.ItemEvent();
 
+        [BoxGroup("Events")]
         [ShowIf("type", Type.Amount)]
         public CustomUnityEvents.IntEvent OnCurrentAmountChangedEvent = new CustomUnityEvents.IntEvent();        
 

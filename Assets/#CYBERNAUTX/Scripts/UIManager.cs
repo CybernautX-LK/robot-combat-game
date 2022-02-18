@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using DG.Tweening;
+using Sirenix.OdinInspector;
 
 namespace CybernautX
 {
-    public class UIManager : MonoSingleton<UIManager>
+    public class UIManager : MonoBehaviour
     {
         public class ShowMessageSettings
         {
@@ -21,29 +22,32 @@ namespace CybernautX
             public float duration;
         }
 
+        [BoxGroup("General")]
         [SerializeField]
         private GameManagerEvents gameManagerEvents;
 
+        [BoxGroup("General")]
         [SerializeField]
         private UIManagerEvents uiManagerEvents;
 
+        [BoxGroup("Settings")]
+        [Range(1.0f, 3.0f)]
+        [SerializeField]
+        private float defaultMessageDuration;
+
+        [BoxGroup("Settings")]
+        [SerializeField]
+        private Ease defaultMessageEase;
+
+        [BoxGroup("References")]
         [SerializeField]
         private TextMeshProUGUI messageDisplay;
 
-        [SerializeField]
-        private float messageDuration;
-
-        [SerializeField]
-        private Ease messageEase;
-
         private MainMenuController mainMenuController;
-
         private HUDController hudController;
 
         private void Awake()
         {
-            Instance = this;
-
             if (uiManagerEvents != null)
             {
                 uiManagerEvents.OnShowMessageEvent += ShowMessage;
@@ -51,7 +55,13 @@ namespace CybernautX
                 uiManagerEvents.OnUpdateTimerEvent += OnUpdateTimer;
             }
 
+            if (gameManagerEvents != null)
+            {
+                gameManagerEvents.OnReturnToMainMenuRequest += OnReturnToMainMenu;
+            }
+
             GameManager.OnGameStartedEvent += OnGameStarted;
+            GameManager.OnGameCompletedEvent += OnGameCompleted;
 
             MainMenuController.OnAwakeEvent += OnMainMenuControllerAwake;
             HUDController.OnAwakeEvent += OnHUDControllerAwake;
@@ -59,10 +69,6 @@ namespace CybernautX
             if (messageDisplay != null)
                 messageDisplay.text = "";
         }
-
-        private void OnHUDControllerAwake(HUDController controller) => hudController = controller;
-
-        private void OnMainMenuControllerAwake(MainMenuController controller) => mainMenuController = controller;
 
         private void OnDestroy()
         {
@@ -73,12 +79,18 @@ namespace CybernautX
                 uiManagerEvents.OnUpdateTimerEvent -= OnUpdateTimer;
             }
 
+            if (gameManagerEvents != null)
+            {
+                gameManagerEvents.OnReturnToMainMenuRequest -= OnReturnToMainMenu;
+            }
+
             GameManager.OnGameStartedEvent -= OnGameStarted;
+            GameManager.OnGameCompletedEvent -= OnGameCompleted;
         }
 
         public void ShowMessage(string message)
         {
-            ShowMessageSettings settings = new ShowMessageSettings(message, messageDuration);
+            ShowMessageSettings settings = new ShowMessageSettings(message, defaultMessageDuration);
             ShowMessage(settings);
         }
 
@@ -86,10 +98,11 @@ namespace CybernautX
         {
             if (messageDisplay == null) return;
 
+            if (DOTween.IsTweening(messageDisplay))
+                DOTween.Kill(messageDisplay);
+
             messageDisplay.text = settings.message;
-            //messageDisplay.DOText(message, messageDuration).SetEase(messageEase);
-            messageDisplay.DOFade(0.0f, settings.duration * 0.5f).SetEase(messageEase).From(1.0f).SetDelay(settings.duration * 0.5f);
-            //messageDisplay.DOScale(0.0f, messageDuration).From(1.0f).SetEase(messageEase);
+            messageDisplay.DOFade(0.0f, settings.duration * 0.5f).SetEase(defaultMessageEase).From(1.0f).SetDelay(settings.duration * 0.5f);
         }
 
         private void OnUpdateTimer(float time) => hudController?.UpdateTimer(time);
@@ -101,6 +114,23 @@ namespace CybernautX
 
             if (mainMenuController != null)
                 mainMenuController.CloseAllMenus();
+        }
+
+        private void OnHUDControllerAwake(HUDController controller) => hudController = controller;
+
+        private void OnMainMenuControllerAwake(MainMenuController controller) => mainMenuController = controller;
+
+
+        private void OnGameCompleted()
+        {
+            if (mainMenuController != null)
+                mainMenuController.OpenMenuSingle("GameOverMenu");
+        }
+
+        private void OnReturnToMainMenu()
+        {
+            if (mainMenuController != null)
+                mainMenuController.OpenMenuSingle("MainMenu");
         }
     }
 }

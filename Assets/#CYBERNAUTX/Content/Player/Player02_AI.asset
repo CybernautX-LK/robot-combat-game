@@ -9,13 +9,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1bea620e3ee0a784da15029fc070f84c, type: 3}
-  m_Name: Player02
+  m_Script: {fileID: 11500000, guid: 3ab7a4c9949185a43a79e479b409a486, type: 3}
+  m_Name: Player02_AI
   m_EditorClassIdentifier: 
-  name: Robot
+  name: AI Player
   maxHealth: 100
   minHealth: 0
-  currentHealth: 0
+  currentHealth: 100
   weaponSlots:
   - {fileID: 11400000, guid: 2bbb1e7fb127f1a4cbd5196a89408f82, type: 2}
   - {fileID: 11400000, guid: b0570365785d8704faafe299c3657a9f, type: 2}
+  receivedDamageMultiplier: 1
+  isActivated: 1
+  targetTag: Player
+  moveSpeed: 1
+  turnSpeed: 2
+  sightRange: 10
+  sightRadius: 2
+  drawDebugRay: 1

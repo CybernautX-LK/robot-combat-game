@@ -2,29 +2,57 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
-using System.Linq;
+using UnityStandardAssets.Characters.FirstPerson;
 
 namespace CybernautX
 {
+    [RequireComponent(typeof(Rigidbody))]
     public class RobotController : MonoBehaviour, IHittable
     {
-        [SerializeField]
-        private Player player;
+        [InlineEditor]
+        public Player player;
 
         private GunModel[] guns;
-        private List<Weapon> selectedWeapons = new List<Weapon>();
-        private Weapon currentWeapon;
+        public List<Weapon> selectedWeapons { get; private set; }
+        public GunModel currentGun { get; private set; }
 
-        [ShowInInspector]
-        [ReadOnly]
-        private int currentIndex { get => (selectedWeapons.Count > 0 && selectedWeapons[0] != null && currentWeapon != null) ? selectedWeapons.IndexOf(currentWeapon) : 0; }
+        private Dictionary<Weapon, GunModel> weaponGunDictionary = new Dictionary<Weapon, GunModel>();
+        public Rigidbody rb { get; private set; }
+
+        public RigidbodyFirstPersonController firstPersonController { get; private set; }
+
+        private int currentIndex;
 
         private void Awake()
         {
+            if (player == null)
+            {
+                this.enabled = false;
+                return;
+            }
+
             guns = GetComponentsInChildren<GunModel>();
+            rb = GetComponent<Rigidbody>();
+
+            if (player is HumanPlayer)
+            {
+                firstPersonController = GetComponent<RigidbodyFirstPersonController>();
+
+                if (firstPersonController == null)
+                    firstPersonController = gameObject.AddComponent<RigidbodyFirstPersonController>();
+            }           
         }
 
         private void Start() => Initialize();
+
+        private void Update()
+        {
+            if (!player.isDead)
+                player.Think(this);
+
+            if (firstPersonController != null)
+                firstPersonController.enabled = player.configuration.movementEnabled;
+        }
 
         public void Initialize()
         {
@@ -32,25 +60,37 @@ namespace CybernautX
 
             foreach (GunModel gun in guns)
             {
-                bool isSelected = selectedWeapons.Contains(gun.weapon);
-                gun.gameObject.SetActive(isSelected);
+                weaponGunDictionary.Add(gun.weapon, gun);
+                gun.gunController.SetActive(false);
             }
 
             SetWeapon(selectedWeapons[0]);
         }
 
-        [Button]
-        public void NextWeapon()
+        public void Shoot()
         {
-            int index = (currentIndex < selectedWeapons.Count - 1) ? currentIndex + 1 : 0;
-            SetWeapon(selectedWeapons[index]);
+            if (currentGun != null && currentGun.gunController != null)
+                currentGun.gunController.Shoot();
         }
 
-        [Button]
+        public void Reload()
+        {
+            if (currentGun != null && currentGun.gunController != null)
+                currentGun.gunController.Reload();
+        }
+
+        [Button(ButtonSizes.Large)]
+        public void NextWeapon()
+        {
+            currentIndex = (currentIndex < selectedWeapons.Count - 1) ? currentIndex + 1 : 0;
+            SetWeapon(selectedWeapons[currentIndex]);
+        }
+
+        [Button(ButtonSizes.Large)]
         public void PreviousWeapon()
         {
-            int index = (currentIndex > 0) ? currentIndex - 1 : selectedWeapons.Count - 1;
-            SetWeapon(selectedWeapons[index]);
+            currentIndex = (currentIndex > 0) ? currentIndex - 1 : selectedWeapons.Count - 1;
+            SetWeapon(selectedWeapons[currentIndex]);
         }
 
         public void SetWeapon(Weapon weapon)
@@ -59,16 +99,14 @@ namespace CybernautX
 
             if (nextGun == null) return;
 
-            if (currentWeapon != null)
+            if (currentGun != null)
             {
-                GunModel currentGun = GetGunByWeapon(currentWeapon);
-                currentGun.gameObject.SetActive(false);
+                currentGun.gunController.SetActive(false);
             }
-            
 
-            nextGun.gameObject.SetActive(true);
+            nextGun.gunController.SetActive(true);
 
-            currentWeapon = weapon;
+            currentGun = nextGun;
         }
 
         private List<Weapon> GetPlayerWeapons()
@@ -88,12 +126,12 @@ namespace CybernautX
             return weapons;
         }
 
-        private GunModel GetGunByWeapon(Weapon weapon) => guns.FirstOrDefault((x) => x.weapon == weapon);
+        public GunModel GetGunByWeapon(Weapon weapon) => weaponGunDictionary[weapon];
 
         public void GetHitted(int damage)
         {
             if (player != null)
-                player.Damage(damage);
+                player.TakeDamage(damage);
         }
     }
 

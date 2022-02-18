@@ -11,47 +11,48 @@ namespace CybernautX
 {
     public class HealthBar : MonoBehaviour
     {
+        [BoxGroup("General")]
         [SerializeField]
         private Player player;
 
+        [BoxGroup("Settings")]
         [SerializeField]
         private Color positiveColor = Color.green;
 
+        [BoxGroup("Settings")]
         [SerializeField]
         private Color negativeColor = Color.red;
 
-        [SerializeField]
-        private float startValue = 100f;
-
+        [BoxGroup("Settings")]
         [SerializeField]
         private float minValue = 0f;
 
+        [BoxGroup("Settings")]
         [SerializeField]
         private float maxValue = 100f;
 
+        [BoxGroup("Settings")]
+        [SerializeField]
+        private float startValue = 100f;
+
+        [BoxGroup("Animation")]
+        [SerializeField]
+        private float defaultAnimationDuration = 0.5f;
+
+        [BoxGroup("References")]
         [SerializeField]
         private TextMeshProUGUI textDisplay;
 
+        [BoxGroup("References")]
         [SerializeField]
         private Slider healthSlider;
 
-        [SerializeField]
-        private float duration = 0.5f;
-
+        [BoxGroup("Debug")]
+        [ShowInInspector]
+        [ReadOnly]
         public float currentValue { get; private set; }
-        private Image fillImage;
 
-        //private void OnEnable()
-        //{
-        //    if (healthBar != null)
-        //        healthBar.onValueChanged.AddListener(OnSliderValueChanged);
-        //}
-        //
-        //private void OnDisable()
-        //{
-        //    if (healthBar != null)
-        //        healthBar.onValueChanged.RemoveListener(OnSliderValueChanged);
-        //}
+        private Image fillImage;
 
         private void Awake()
         {
@@ -70,7 +71,7 @@ namespace CybernautX
             }
         }
 
-        private void OnHealthUpdate(float value) => SetValue(value, duration);
+        private void OnHealthUpdate(float value) => SetValue(value, defaultAnimationDuration);
 
         private void OnDisable()
         {
@@ -85,7 +86,7 @@ namespace CybernautX
             if (player == null)
             {
                 enabled = false;
-                Debug.Log($"{typeof(HealthBar).Name}: Can't initilaize because player is null.");
+                Debug.LogWarning($"{typeof(HealthBar).Name}: Can't initialize because player is null.");
                 return;
             } 
            

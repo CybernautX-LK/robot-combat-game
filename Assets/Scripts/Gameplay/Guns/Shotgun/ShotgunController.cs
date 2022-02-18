@@ -52,8 +52,8 @@ public class ShotgunController : GunController
             if (!Physics.Raycast(ray, out hit, data.range)) continue;
             hitFX = Instantiate(hitEffect);
             hitFX.transform.position = hit.point;
-            Debug.Log(hit.transform.name + " - " + hit.point);
-            Debug.Log(hitFX.transform.name + " - " + hitFX.transform.position);
+            //Debug.Log(hit.transform.name + " - " + hit.point);
+            //Debug.Log(hitFX.transform.name + " - " + hitFX.transform.position);
             if (hit.transform.GetComponent<Rigidbody>() != null)
                 hit.transform.GetComponent<Rigidbody>().AddForce(impactForce / pelletsPerBullet * Vector3.forward);
             if (hit.transform.GetComponent<IHittable>() == null) continue;

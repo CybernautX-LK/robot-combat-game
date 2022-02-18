@@ -13,13 +13,8 @@ public class GunController : MonoBehaviour
     [SerializeField] internal bool successfulShot;
 
     //Unity Events
-    private void Awake()
-    {
-        if (data.backupAmmo <= 0)
-            data.backupAmmo = data.maxBackupAmmo;
-        if (data.ammo <= 0)
-            data.ammo = data.maxAmmo;
-    }
+    private void Awake() => Reset();
+
     private void Update()
     {
         if (data.reloadTimer > 0) AdvanceCooldown();
@@ -49,7 +44,7 @@ public class GunController : MonoBehaviour
         Instantiate(shootEffect, shootEffectOrigin);
 
         if (data.maxAmmo > 0) data.ammo--;
-        AmmoChanged.Invoke();
+        AmmoChanged?.Invoke();
         data.fireTimer = 1 / data.fireRate;
         successfulShot = true;
         //yaba yaba
@@ -68,6 +63,15 @@ public class GunController : MonoBehaviour
             data.reloadTimer = data.reloadDuration;
         AmmoChanged?.Invoke();
     }
+
+    public void Reset()
+    {
+        if (data.backupAmmo <= 0)
+            data.backupAmmo = data.maxBackupAmmo;
+        if (data.ammo <= 0)
+            data.ammo = data.maxAmmo;
+    }
+
 	void AdvanceCooldown()
     {
         data.reloadTimer -= Time.deltaTime;

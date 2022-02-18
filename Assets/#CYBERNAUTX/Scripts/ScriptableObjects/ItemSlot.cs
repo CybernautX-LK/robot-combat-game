@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CybernautX
 {
-    [CreateAssetMenu(fileName = "ItemSlot", menuName = "CybernautX/General/ItemSlot", order = 1)]
+    [CreateAssetMenu(fileName = "ItemSlot", menuName = "CybernautX/Items/ItemSlot", order = 1)]
     public class ItemSlot : ScriptableObject
     {
         public List<Item> availableItems = new List<Item>();

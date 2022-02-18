@@ -4,7 +4,7 @@ using CybernautX;
 public class GunModel : MonoBehaviour
 {
     public Weapon weapon;
-    [SerializeField] GunController gunController;
+    public GunController gunController;
     MeshRenderer meshRenderer;
 
     //Unity Events

@@ -6,9 +6,26 @@ using Sirenix.OdinInspector;
 
 namespace CybernautX
 {
-    [CreateAssetMenu(menuName = "CybernautX/General/Player", order = 0)]
-    public class Player : ScriptableObject
+    public abstract class Player : ScriptableObject
     {
+        public class Configuration
+        {
+            public bool movementEnabled;
+            public bool turningEnabled;
+            public bool shootingEnabled;
+            public bool weaponSwitchingEnabled;
+
+            public Configuration(bool movementEnabled = true, bool turningEnabled = true, bool shootingEnabled = true, bool weaponSwitchingEnabled = true)
+            {
+                this.movementEnabled = movementEnabled;
+                this.turningEnabled = turningEnabled;
+                this.shootingEnabled = shootingEnabled;
+                this.weaponSwitchingEnabled = weaponSwitchingEnabled;
+            }
+        }
+
+        public Configuration configuration = new Configuration();
+
         [BoxGroup("General")]
         public new string name = "Insert player name here...";
 
@@ -16,7 +33,7 @@ namespace CybernautX
         public float maxHealth = 100f;
 
         [BoxGroup("Health")]
-        public float minHealth = 100f;
+        public float minHealth = 0.0f;
 
         [BoxGroup("Health")]
         public float currentHealth;
@@ -25,16 +42,17 @@ namespace CybernautX
         [InlineEditor]
         public List<ItemSlot> weaponSlots = new List<ItemSlot>();
 
-        //[BoxGroup("Weapons")]
-        //public List<Weapon> availableWeapons = new List<Weapon>();
-        //
-        //[BoxGroup("Weapons")]
-        //public Weapon[] currentWeapons;
+        [BoxGroup("Settings")]
+        [PropertyOrder(20f)]
+        [Range(0.5f, 3.0f)]
+        public float takeDamageMultiplier = 1.0f;
 
+        [BoxGroup("Debug")]
         [ShowInInspector]
         [ReadOnly]
         public bool isDead { get => currentHealth <= 0.0f; }
 
+        [BoxGroup("Debug")]
         [ShowInInspector]
         [ReadOnly]
         public int currentPoints { get; private set; }
@@ -43,14 +61,9 @@ namespace CybernautX
         public UnityAction<float> OnHealthUpdatedEvent;
         public UnityAction OnPlayerDeadEvent;
 
-        private void OnEnable()
-        {
-            //currentWeapons = new Weapon[weaponSlots];
-            currentHealth = maxHealth;
-            currentPoints = 0;
-        }
+        private void OnEnable() => Reset();
 
-        public void Damage(float value) => SetHealth(currentHealth - value);
+        public void TakeDamage(float value) => SetHealth(currentHealth - value * takeDamageMultiplier);
 
 
         public void Heal(float value) => SetHealth(currentHealth + value);
@@ -60,12 +73,12 @@ namespace CybernautX
             OnPlayerDeadEvent?.Invoke();
         }
 
+        public virtual void Think(RobotController controller) { }
+
         [Button]
         public void SetHealth(float value)
         {
-            if (isDead) return;
-
-            if (value <= 0.0f)
+            if (value <= 0.0f && !isDead)
                 Die();
 
             currentHealth = Mathf.Clamp(value, 0.0f, maxHealth);
@@ -77,22 +90,14 @@ namespace CybernautX
         {
             currentPoints = points;
             OnPointsUpdatedEvent?.Invoke(points);
-        } 
+        }
 
-
-        //public void SetItem(Item item) { }
-
-        //public void SetItem(Item item, int index)
-        //{
-        //    if (item is Weapon)
-        //    {
-        //        if (weaponSlots <= index) return;
-        //        Weapon weapon = (Weapon)item;             
-        //        currentWeapons[index] = weapon;
-        //    }
-        //
-        //
-        //}
+        public void Reset()
+        {
+            SetHealth(maxHealth);
+            SetPoints(0);
+            takeDamageMultiplier = 1.0f;
+        }
     }
 }
 

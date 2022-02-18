@@ -9,13 +9,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1bea620e3ee0a784da15029fc070f84c, type: 3}
-  m_Name: Player01
+  m_Script: {fileID: 11500000, guid: cecc75175adc9d14f9c31e5f368e047c, type: 3}
+  m_Name: Player01_Human
   m_EditorClassIdentifier: 
-  name: Human
+  name: Human Player
   maxHealth: 100
   minHealth: 0
-  currentHealth: 100
+  currentHealth: 0
   weaponSlots:
   - {fileID: 11400000, guid: b82290d9370e34044b7f72fe3685ec89, type: 2}
   - {fileID: 11400000, guid: e63a034cb1b0ba24ead939b47f97092c, type: 2}
+  receivedDamageMultiplier: 1
+  isActivated: 1
+  shootKey: 323
+  reloadKey: 114
+  nextWeaponKey: 101
+  previousWeaponKey: 113

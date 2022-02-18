@@ -25,7 +25,7 @@ namespace CybernautX
         [BoxGroup("Settings")]
         [SerializeField]
         [Range(1, 5)]
-        private int roundsToWin = 3;
+        private int pointsToWin = 3;
 
         [BoxGroup("Settings")]
         [SerializeField]
@@ -42,10 +42,6 @@ namespace CybernautX
         [Range(10, 300)]
         private int roundDuration = 120;
 
-        [BoxGroup("References")]
-        [SerializeField]
-        private ItemSelection roundsToWinSelection;
-
         [BoxGroup("Messages")]
         [SerializeField]
         private string gameStartedMessage = "Game Starts...";
@@ -56,13 +52,19 @@ namespace CybernautX
 
         [BoxGroup("Messages")]
         [SerializeField]
-        private string roundEndedMessage = "Game Over!";
+        private string suddenDeathMessage = "Sudden Death!";
 
+        private Player currentWinner;
         private float currentRoundTime;
         private Coroutine currentGameCoroutine;
 
+        private bool suddenDeathMode = false;
+
         public static UnityAction OnGameStartedEvent;
+        public static UnityAction OnGameRoundInitializedEvent;
         public static UnityAction OnGameRoundStartedEvent;
+        public static UnityAction OnGameRoundCompletedEvent;
+        public static UnityAction OnGameCompletedEvent;
 
         private void Awake()
         {
@@ -70,8 +72,10 @@ namespace CybernautX
 
             if (gameManagerEvents != null)
             {
-                gameManagerEvents.OnGameStartEvent += StartGame;
-                gameManagerEvents.OnGameRoundUpdateEvent += OnGameRoundUpdate;
+                gameManagerEvents.OnGameStartRequest += StartGame;
+                gameManagerEvents.OnGameRoundUpdateRequest += OnGameRoundUpdate;
+                gameManagerEvents.OnReturnToMainMenuRequest += ReturnToMainMenu;
+                gameManagerEvents.OnExitGameRequest += ExitGame;
             }
         }
 
@@ -79,14 +83,16 @@ namespace CybernautX
         {
             if (gameManagerEvents != null)
             {
-                gameManagerEvents.OnGameStartEvent -= StartGame;
-                gameManagerEvents.OnGameRoundUpdateEvent -= OnGameRoundUpdate;
+                gameManagerEvents.OnGameStartRequest -= StartGame;
+                gameManagerEvents.OnGameRoundUpdateRequest -= OnGameRoundUpdate;
+                gameManagerEvents.OnReturnToMainMenuRequest -= ReturnToMainMenu;
+                gameManagerEvents.OnExitGameRequest += ExitGame;
             }
         }
 
         private void Start() => LoadingManager.LoadSceneAdditive("01_MainMenu");
 
-        [Button]
+        [Button(ButtonSizes.Large)]
         public void StartGame()
         {
             if (!SettingsValid()) return;
@@ -101,112 +107,130 @@ namespace CybernautX
         {
             OnGameStartedEvent?.Invoke();
 
-            Debug.Log($"{typeof(GameManager).Name}: Loading Arena Started");
+            ResetAllPlayers();
 
-            yield return LoadingManager.LoadSceneAdditiveAsync("02_Arena");
-
-            Debug.Log($"{typeof(GameManager).Name}: Loading Arena Complete");
-           
-            InitializeGame();
-
-            uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(gameStartedMessage, roundDelay));
-
-            yield return new WaitForSeconds(roundDelay);
-
-            // Countdown Coroutine
-            yield return StartCoroutine(CountdownTimer(countdownTimer));
-
-            IEnumerator CountdownTimer(int seconds)
+            while (!PlayerHasWon())
             {
-                Debug.Log($"{typeof(GameManager).Name}: Countdown Started");
+                yield return StartCoroutine(ResetArenaScene());
 
-                for (int i = seconds; i > 0; i--)
+                IEnumerator ResetArenaScene()
                 {
-                    uiManagerEvents?.ShowMessage($"{i}");
+                    if (LoadingManager.loadedScenes.Contains(LoadingManager.GetSceneByName("02_Arena")))
+                    {
+                        yield return LoadingManager.UnloadScene("02_Arena");
+                    }
 
-                    Debug.Log($"{typeof(GameManager).Name}: {i}");
-                    yield return new WaitForSeconds(1.0f);
+                    Debug.Log($"{typeof(GameManager).Name}: Loading Arena Started");
+
+                    yield return LoadingManager.LoadSceneAdditiveAsync("02_Arena");
+
+                    Debug.Log($"{typeof(GameManager).Name}: Loading Arena Complete");
                 }
 
-                Debug.Log($"{typeof(GameManager).Name}: Countdown Complete");
-            }
+                yield return StartCoroutine(StartGameRound());
 
-            yield return StartCoroutine(StartGameRound());
-
-            // Game Round Coroutine
-            IEnumerator StartGameRound()
-            {
-                Debug.Log($"{typeof(GameManager).Name}: Round Started");
-
-                OnGameRoundStartedEvent?.Invoke();
-
-                uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(roundStartedMessage, 2.0f));
-
-                while (PlayersAlive().Count > 1 && !TimeIsUp())
+                // Game Round Coroutine
+                IEnumerator StartGameRound()
                 {
-                    // Update Timer
-                    UpdateTimer();
+                    InitializeGameRound();
 
-                    yield return new WaitForEndOfFrame();
+                    uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(suddenDeathMode ? suddenDeathMessage : gameStartedMessage, roundDelay));
+
+                    yield return new WaitForSeconds(roundDelay);
+
+                    // Countdown Coroutine
+                    yield return StartCoroutine(CountdownTimer(countdownTimer));
+
+                    IEnumerator CountdownTimer(int seconds)
+                    {
+                        Debug.Log($"{typeof(GameManager).Name}: Countdown Started");
+
+                        for (int i = seconds; i > 0; i--)
+                        {
+                            uiManagerEvents?.ShowMessage($"{i}");
+
+                            Debug.Log($"{typeof(GameManager).Name}: {i}");
+                            yield return new WaitForSeconds(1.0f);
+                        }
+
+                        Debug.Log($"{typeof(GameManager).Name}: Countdown Complete");
+                    }
+
+                    Debug.Log($"{typeof(GameManager).Name}: Round Started");
+
+                    OnGameRoundStartedEvent?.Invoke();
+
+                    uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings(roundStartedMessage, 2.0f));
+
+                    foreach (Player player in players)
+                    {
+                        player.configuration = new Player.Configuration(true, true, true, true);
+                    }
+
+                    while (PlayersAlive().Count > 1 && (suddenDeathMode || !TimeIsUp()))
+                    {
+                        if (!suddenDeathMode)
+                            UpdateTimer();
+
+                        yield return null;
+                    }
+
+                    foreach (Player player in players)
+                    {
+                        player.configuration = new Player.Configuration(false, false, false, false);
+                    }
+
+                    if (TimeIsUp() && !suddenDeathMode)
+                    {
+                        suddenDeathMode = true;
+
+                        uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings($"No one won the round!", 3.0f));
+                        yield return new WaitForSeconds(3.0f);
+                    }
+                    else
+                    {
+                        suddenDeathMode = false;
+
+                        Player lastPlayerAlive = PlayersAlive()[0];
+                        lastPlayerAlive.SetPoints(lastPlayerAlive.currentPoints + 1);
+
+                        if (!PlayerHasWon())
+                        {
+                            uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings($"{(lastPlayerAlive != null ? lastPlayerAlive.name : "No one")} won the round!", 3.0f));
+                            yield return new WaitForSeconds(3.0f);
+                        }
+                    }                                        
+
+                    Debug.Log($"{typeof(GameManager).Name}: Round Complete");
+
+                    OnGameRoundCompletedEvent?.Invoke();
                 }
-
-                Player lastPlayerAlive = PlayersAlive()[0];
-                lastPlayerAlive.SetPoints(lastPlayerAlive.currentPoints + 1);
-
-                uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings($"{(lastPlayerAlive != null ? lastPlayerAlive.name : "No one")} has won!", 3.0f));
-
-                Debug.Log($"{typeof(GameManager).Name}: Round Complete");
             }
 
-            // Game Over Coroutine
-        }
+            uiManagerEvents?.ShowMessageWithSettings(new UIManager.ShowMessageSettings($"{currentWinner.name} won the game!", 3.0f));
+            yield return new WaitForSeconds(3.0f);
 
-        private bool TimeIsUp()
-        {
-            bool roundTimeEnded = currentRoundTime < 0.0f;
+            Debug.Log($"{typeof(GameManager).Name}: Game Complete");
 
-            return roundTimeEnded;
-        }
-
-        private List<Player> PlayersAlive()
-        {
-            List<Player> playersAlive = new List<Player>();
-
-            foreach (Player player in players)
-            {
-                if (!player.isDead)
-                {
-                    playersAlive.Add(player);
-                }
-            }
-
-            return playersAlive;
-        }
-
-        private void UpdateTimer()
-        {
-            currentRoundTime -= Time.deltaTime;
-            uiManagerEvents?.UpdateTimer(currentRoundTime);
-        }
-
-        private void InitializeGame()
-        {
-            currentRoundTime = roundDuration;
-            uiManagerEvents?.UpdateTimer(currentRoundTime);
-
-            // Spawn Players
-
-            // Set Weapons
-
-            // Update UI
+            OnGameCompletedEvent?.Invoke();
         }
 
 
 
-        [Button]
+        [Button(ButtonSizes.Large)]
         public void ReturnToMainMenu()
         {
-            LoadingManager.UnloadScene("02_Arena");
+            if(LoadingManager.loadedScenes.Contains(LoadingManager.GetSceneByName("02_Arena")))
+                LoadingManager.UnloadScene("02_Arena");
+
+            if (!LoadingManager.loadedScenes.Contains(LoadingManager.GetSceneByName("01_MainMenu")))
+                LoadingManager.LoadSceneAdditiveAsync("01_MainMenu");
+        }
+
+        [Button(ButtonSizes.Large)]
+        public void ExitGame()
+        {
+            Application.Quit();
         }
 
         private bool SettingsValid()
@@ -237,10 +261,92 @@ namespace CybernautX
             return settingsValid;
         }
 
-        private void OnGameRoundUpdate(int amount)
+        private bool TimeIsUp()
         {
-            roundsToWin = amount;
+            bool roundTimeEnded = currentRoundTime < 0.0f;
+
+            return roundTimeEnded;
         }
+
+        private List<Player> PlayersAlive()
+        {
+            List<Player> playersAlive = new List<Player>();
+
+            foreach (Player player in players)
+            {
+                if (!player.isDead)
+                {
+                    playersAlive.Add(player);
+                }
+            }
+
+            return playersAlive;
+        }
+
+        private bool PlayerHasWon()
+        {
+            foreach (Player player in players)
+            {
+                if (player.currentPoints >= pointsToWin)
+                {
+                    currentWinner = player;
+                    return true;
+                }
+            }
+
+            currentWinner = null;
+            return false;
+        }
+
+        private void UpdateTimer()
+        {
+            currentRoundTime -= Time.deltaTime;
+            uiManagerEvents?.UpdateTimer(currentRoundTime);
+        }
+
+        private void InitializeGameRound()
+        {
+            currentRoundTime = suddenDeathMode ? 0.0f : roundDuration;
+            uiManagerEvents?.UpdateTimer(currentRoundTime);
+
+            ResetAllPlayersHealth();
+
+            float receivedDamageMultiplier = suddenDeathMode ? 2.0f : 1.0f;
+            SetAllPlayersReceivedDamageMultiplier(receivedDamageMultiplier);
+
+            foreach (Player player in players)
+            {
+                player.configuration = new Player.Configuration(false, true, false, true);
+            }
+
+            OnGameRoundInitializedEvent?.Invoke();
+        }
+
+        private void ResetAllPlayers()
+        {
+            foreach (Player player in players)
+            {
+                player.Reset();
+            }
+        }
+
+        private void ResetAllPlayersHealth()
+        {
+            foreach (Player player in players)
+            {
+                player.SetHealth(player.maxHealth);
+            }
+        }
+
+        private void SetAllPlayersReceivedDamageMultiplier(float multiplier)
+        {
+            foreach (Player player in players)
+            {
+                player.takeDamageMultiplier = multiplier;
+            }
+        }
+
+        private void OnGameRoundUpdate(int amount) => pointsToWin = amount;
     }
 }
 

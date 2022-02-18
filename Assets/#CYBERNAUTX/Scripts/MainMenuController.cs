@@ -13,22 +13,12 @@ namespace CybernautX
         public class Menu
         {
             public string menuName = "Insert Menu Name";
-            public GameObject gameObject;
+            public GameObject rootObject;
         }
 
         [BoxGroup("Settings")]
         [SerializeField]
         private string defaultMenu = "";
-
-        [BoxGroup("Settings")]
-        [SerializeField]
-        private bool hideMainMenuButton = true;
-
-        [BoxGroup("References")]
-        [SerializeField]
-        private GameObject mainMenuButton = null;
-        [BoxGroup("References")]
-        public GameObject continueButton;
 
         [BoxGroup("References")]
         [SerializeField]
@@ -75,7 +65,7 @@ namespace CybernautX
             //if (mainUI != null)
             //    mainUI.SetActive(true);
 
-            if (menus.Count > 0 && menus[0].gameObject != null)
+            if (menus.Count > 0 && menus[0].rootObject != null)
             {
                 Menu menuToOpen = (menuName == "") ? menus[0] : GetMenuByName(menuName);
 
@@ -84,12 +74,16 @@ namespace CybernautX
                     if (!additive)
                         CloseAllMenus();
 
-                    if (mainMenuButton != null && hideMainMenuButton && mainMenuButton.activeSelf)
-                        mainMenuButton.SetActive(false);
-
-                    menuToOpen.gameObject.SetActive(true);
+                    menuToOpen.rootObject.SetActive(true);
 
                     RegisterMenu(menuToOpen);
+
+                    if (!Cursor.visible)
+                    {
+                        Cursor.lockState = CursorLockMode.None;
+                        Cursor.visible = true;
+                    }
+                    
                 }
             }
         }
@@ -100,29 +94,17 @@ namespace CybernautX
 
             if (menuToClose != null)
             {
-                menuToClose.gameObject.SetActive(false);
+                menuToClose.rootObject.SetActive(false);
                 UnregisterMenu(menuToClose);
             }
-
-            if (activeMenus.Count < 1)
-            {
-                if (mainMenuButton != null && !hideMainMenuButton && !mainMenuButton.activeSelf)
-                    mainMenuButton.SetActive(true);
-            }
-
         }
 
         public void CloseAllMenus()
         {
             foreach (Menu menu in menus)
             {
-                menu.gameObject.SetActive(false);
+                menu.rootObject.SetActive(false);
                 UnregisterMenu(menu);
-            }
-
-            if (mainMenuButton != null && !hideMainMenuButton && !mainMenuButton.activeSelf)
-            {
-                mainMenuButton.SetActive(true);
             }
         }
 

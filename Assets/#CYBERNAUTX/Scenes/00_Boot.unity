@@ -216,7 +216,7 @@ RectTransform:
   m_Children:
   - {fileID: 1785294963}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -295,7 +295,7 @@ Transform:
   m_LocalScale: {x: 1.0010558, y: 1.0010558, z: 1.0010558}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &672089925
 GameObject:
@@ -338,16 +338,15 @@ MonoBehaviour:
   gameManagerEvents: {fileID: 11400000, guid: de5c33da571154b44b851f0a2e764474, type: 2}
   uiManagerEvents: {fileID: 11400000, guid: 6655e15d7f951f6489b7360fdce71642, type: 2}
   players:
-  - {fileID: 11400000, guid: b0ad4f6b5ce1cb848abc0825026e4b6d, type: 2}
-  - {fileID: 11400000, guid: 6f2e3b8e4e4b92144a81b4ed6dc37914, type: 2}
-  roundsToWin: 3
-  roundDelay: 0
-  countdownTimer: 0
+  - {fileID: 11400000, guid: 184e28604b01e954bb79177929346347, type: 2}
+  - {fileID: 11400000, guid: ac21922fd15e0a543ba33535c2744502, type: 2}
+  pointsToWin: 5
+  roundDelay: 2
+  countdownTimer: 3
   roundDuration: 120
-  roundsToWinSelection: {fileID: 0}
   gameStartedMessage: Game Starts...
   roundStartedMessage: Fight!
-  roundEndedMessage: Game Over!
+  suddenDeathMessage: Sudden Death!
 --- !u!4 &672089927
 Transform:
   m_ObjectHideFlags: 0
@@ -426,6 +425,49 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &960369063
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 960369065}
+  - component: {fileID: 960369064}
+  m_Layer: 0
+  m_Name: LoadingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &960369064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960369063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 572b7d08de4569f439e458e9aaaa515e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &960369065
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960369063}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1589630162
@@ -457,20 +499,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: caa70d4ea4283c14f8e0af5349a502c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serializationData:
-    SerializedFormat: 2
-    SerializedBytes: 
-    ReferencedUnityObjects: []
-    SerializedBytesString: 
-    Prefab: {fileID: 0}
-    PrefabModificationsReferencedUnityObjects: []
-    PrefabModifications: []
-    SerializationNodes: []
   gameManagerEvents: {fileID: 11400000, guid: de5c33da571154b44b851f0a2e764474, type: 2}
   uiManagerEvents: {fileID: 11400000, guid: 6655e15d7f951f6489b7360fdce71642, type: 2}
+  defaultMessageDuration: 1
+  defaultMessageEase: 3
   messageDisplay: {fileID: 1785294964}
-  messageDuration: 1
-  messageEase: 3
 --- !u!4 &1589630164
 Transform:
   m_ObjectHideFlags: 0

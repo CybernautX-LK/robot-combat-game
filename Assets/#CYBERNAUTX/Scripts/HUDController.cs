@@ -3,30 +3,37 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using TMPro;
-using DG.Tweening;
+using Sirenix.OdinInspector;
 
 namespace CybernautX
 {
     public class HUDController : MonoBehaviour
     {
+        [BoxGroup("Points")]
         [SerializeField]
         private Player player;
 
-        [SerializeField]
-        private HealthBar playerHealthBar;
-
+        [BoxGroup("Points")]
         [SerializeField]
         private Player enemy;
 
-        [SerializeField]
-        private HealthBar enemyHealthBar;
-
-        [SerializeField]
-        private TextMeshProUGUI ammoCounter;
-
+        [BoxGroup("Points")]
         [SerializeField]
         private TextMeshProUGUI pointCounter;
 
+        [BoxGroup("Health")]
+        [SerializeField]
+        private HealthBar playerHealthBar;
+
+        [BoxGroup("Health")]
+        [SerializeField]
+        private HealthBar enemyHealthBar;
+
+        [BoxGroup("Ammo")]
+        [SerializeField]
+        private TextMeshProUGUI ammoCounter;
+
+        [BoxGroup("Time")]
         [SerializeField]
         private TextMeshProUGUI roundTimer;
 
@@ -37,8 +44,8 @@ namespace CybernautX
             if (player != null)
                 player.OnPointsUpdatedEvent += OnPointsUpdated;
 
-            if (player != null)
-                player.OnPointsUpdatedEvent += OnPointsUpdated;
+            if (enemy != null)
+                enemy.OnPointsUpdatedEvent += OnPointsUpdated;
 
             OnAwakeEvent?.Invoke(this);
         }
@@ -53,8 +60,8 @@ namespace CybernautX
             if (player != null)
                 player.OnPointsUpdatedEvent -= OnPointsUpdated;
 
-            if (player != null)
-                player.OnPointsUpdatedEvent -= OnPointsUpdated;
+            if (enemy != null)
+                enemy.OnPointsUpdatedEvent -= OnPointsUpdated;
         }
 
         public void Enable() => gameObject.SetActive(true);

@@ -72,7 +72,7 @@ public class FlamethrowerController : GunController
         {
             if (target.GetComponent<IHittable>() == null) continue;
             target.GetComponent<IHittable>().GetHitted((int)currentDamage);
-            Debug.Log(target.name);
+            //Debug.Log(target.name);
         }
     }
     void CalculateCurrentDamage()
