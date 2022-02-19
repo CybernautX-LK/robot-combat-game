@@ -48,7 +48,7 @@ namespace CybernautX
 
             ChooseWeapon(controller);
 
-            if (TargetInRange(controller) && TargetInSight(controller))
+            if (TargetInRange(controller) && (TargetInSight(controller) || TargetDistance(controller) > 1.0f))
                 Attack(controller);
         }
 
@@ -84,7 +84,10 @@ namespace CybernautX
             {
                 GunModel gun = controller.GetGunByWeapon(weapon);
 
-                if (gun.gunController.data.ammo <= 0) continue;
+                bool outOfAmmo = gun.gunController.data.maxAmmo > 0;
+                bool usesAmmo = gun.gunController.data.ammo <= 0;
+
+                if (outOfAmmo && usesAmmo) continue;
 
                 float value = Mathf.Abs(TargetDistance(controller) - gun.gunController.data.range);
 

@@ -73,7 +73,7 @@ namespace CybernautX
             if (gameManagerEvents != null)
             {
                 gameManagerEvents.OnGameStartRequest += StartGame;
-                gameManagerEvents.OnGameRoundUpdateRequest += OnGameRoundUpdate;
+                gameManagerEvents.OnGameRoundUpdateRequest += UpdateGameRounds;
                 gameManagerEvents.OnReturnToMainMenuRequest += ReturnToMainMenu;
                 gameManagerEvents.OnExitGameRequest += ExitGame;
             }
@@ -84,7 +84,7 @@ namespace CybernautX
             if (gameManagerEvents != null)
             {
                 gameManagerEvents.OnGameStartRequest -= StartGame;
-                gameManagerEvents.OnGameRoundUpdateRequest -= OnGameRoundUpdate;
+                gameManagerEvents.OnGameRoundUpdateRequest -= UpdateGameRounds;
                 gameManagerEvents.OnReturnToMainMenuRequest -= ReturnToMainMenu;
                 gameManagerEvents.OnExitGameRequest += ExitGame;
             }
@@ -346,7 +346,7 @@ namespace CybernautX
             }
         }
 
-        private void OnGameRoundUpdate(int amount) => pointsToWin = amount;
+        private void UpdateGameRounds(int amount) => pointsToWin = amount;
     }
 }
 
