@@ -2,6 +2,8 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_EDITOR
+
 namespace UnityStandardAssets.ImageEffects
 {
     [CustomEditor (typeof(Bloom))]
@@ -160,3 +162,5 @@ namespace UnityStandardAssets.ImageEffects
         }
     }
 }
+
+#endif
